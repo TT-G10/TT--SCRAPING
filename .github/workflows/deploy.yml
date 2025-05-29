@@ -1,0 +1,42 @@
+name: Deploy Scraper to Azure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+      ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+      ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+
+      - name: 🔧 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🐳 Build Docker image
+        run: |
+          docker build -t group10.azurecr.io/thinktank-scraper:latest .
+
+      - name: 🔐 Log in to Azure Container Registry
+        run: |
+          echo $ACR_PASSWORD | docker login group10.azurecr.io -u $ACR_USERNAME --password-stdin
+
+      - name: ☁️ Push image to ACR
+        run: |
+          docker push group10.azurecr.io/thinktank-scraper:latest

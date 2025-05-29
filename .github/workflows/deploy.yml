@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-22.04  # ✅ Explicitly set a stable version
+    runs-on: ubuntu-22.04
 
     env:
       AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
@@ -40,4 +40,13 @@ jobs:
       - name: ☁️ Push image to ACR
         run: |
           docker push group10.azurecr.io/thinktank-scraper:latest
+
+      - name: 🚀 Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: thinktank-scraper-app
+          slot-name: production
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: group10.azurecr.io/thinktank-scraper:latest
+
 
